@@ -30,8 +30,8 @@ st.title('Stock Price Prediction')
 
 # Sidebar for user input
 st.sidebar.header('Select Stock and Time Period')
-stock_symbol = st.sidebar.text_input('Enter Stock Symbol (e.g., AAPL):', 'AAPL')
-time_period = st.sidebar.selectbox('Select Time Period (The best Time Period is 3 years):', ['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '3y', '5y', '10y', 'ytd', '3y'])
+stock_symbol = st.sidebar.text_input('Enter Stock Symbol (e.g., AAPL):')
+time_period = st.sidebar.selectbox('Select Time Period (The best Time Period is 3 years):', ['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '3y', '5y', '10y', 'ytd'])
 
 # Download stock data
 stock_data = yf.download(stock_symbol, period=time_period)
