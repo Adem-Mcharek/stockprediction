@@ -53,12 +53,12 @@ testX, testY = create_dataset(test_data, look_back)
 
 # Define LSTM model
 model = Sequential()
-model.add(LSTM(4, input_shape=(1, look_back)))
+model.add(LSTM(10, input_shape=(1, look_back)))
 model.add(Dense(1))
-model.compile(loss="mean_squared_error", optimizer="adam")
+model.compile(loss="mean_squared_error", optimizer="adamax")
 
 # Train the model
-model.fit(trainX, trainY, epochs=100, batch_size=16, verbose=2)
+model.fit(trainX, trainY, epochs=200, batch_size=16, verbose=2)
 
 # Make predictions
 trainPredict = model.predict(trainX)
