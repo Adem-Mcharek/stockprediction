@@ -1,7 +1,6 @@
 import streamlit as st
 
 import numpy as np
-import pandas as pd
 import math
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
@@ -12,6 +11,7 @@ from keras.layers import LSTM, Dense
 import keras.backend as K
 import plotly.graph_objects as go
 from sklearn.metrics import mean_absolute_percentage_error
+
 
 # Set random seed for reproducibility
 np.random.seed(10)
@@ -24,8 +24,6 @@ def create_dataset(data, look_back=1):
         Y.append(data[i + look_back, 0])
     return np.array(X), np.array(Y)
 
-look_back = 1
-
 # Streamlit app
 st.title('Stock Price Prediction')
 
@@ -36,22 +34,11 @@ time_period = st.sidebar.selectbox('Select Time Period (The best Time Period is 
 
 # Download stock data
 stock_data = yf.download(stock_symbol, period=time_period)
-# Calculate On-Balance Volume (OBV)
-gold_data['OBV'] = ta.volume.on_balance_volume(gold_data['Close'], gold_data['Volume'], fillna=True)
-# Calculate Accumulation/Distribution Line (A/D)
-gold_data['A/D'] = ta.volume.acc_dist_index(gold_data['High'], gold_data['Low'], gold_data['Close'], gold_data['Volume'], fillna=True)
-
-# Prepare the data for LSTM
-gold_close = gold_data['Close'].values.reshape(-1, 1)
-gold_obv = gold_data['OBV'].values.reshape(-1, 1)
-gold_ad = gold_data['A/D'].values.reshape(-1, 1)
-
-# Concatenate the indicators with the closing prices
-gold_data_combined = np.concatenate((gold_close, gold_obv, gold_ad), axis=1)
+gold_close = stock_data['Close'].values.reshape(-1, 1)
 
 # Scale data to range [0, 1]
 scaler = MinMaxScaler(feature_range=(0, 1))
-gold_data_scaled = scaler.fit_transform(gold_data_combined)
+gold_close_scaled = scaler.fit_transform(gold_close)
 
 # Split data into train and test sets
 train_size = math.ceil(len(gold_close_scaled) * 0.85)
@@ -64,39 +51,28 @@ look_back = 1
 trainX, trainY = create_dataset(train_data, look_back)
 testX, testY = create_dataset(test_data, look_back)
 
-# Reshape input data for LSTM [samples, time steps, features]
-trainX = np.reshape(trainX, (trainX.shape[0], trainX.shape[1], trainX.shape[2]))
-testX = np.reshape(testX, (testX.shape[0], testX.shape[1], testX.shape[2]))
-
 # Define LSTM model
 model = Sequential()
-model.add(LSTM(10, input_shape=(1, look_back, trainX.shape[2])))
+model.add(LSTM(4, input_shape=(1, look_back)))
 model.add(Dense(1))
-model.compile(loss="mean_squared_error", optimizer="adamax")
+model.compile(loss="mean_squared_error", optimizer="adam")
 
 # Train the model
-model.fit(trainX, trainY, epochs=200, batch_size=16, verbose=2)
+model.fit(trainX, trainY, epochs=100, batch_size=16, verbose=2)
 
 # Make predictions
 trainPredict = model.predict(trainX)
 testPredict = model.predict(testX)
 
 # Invert predictions to original scale
-trainPredict = scaler.inverse_transform(np.concatenate((trainPredict, trainX[:, -1, 1:]), axis=1))[:, 0]
-trainY = scaler.inverse_transform(np.concatenate((trainY.reshape(-1, 1), train_data[look_back:, 1:]), axis=1))[:, 0]
-testPredict = scaler.inverse_transform(np.concatenate((testPredict, testX[:, -1, 1:]), axis=1))[:, 0]
-testY = scaler.inverse_transform(np.concatenate((testY.reshape(-1, 1), test_data[look_back:, 1:]), axis=1))[:, 0]
+trainPredict = scaler.inverse_transform(trainPredict)
+trainY = scaler.inverse_transform([trainY])
+testPredict = scaler.inverse_transform(testPredict)
+testY = scaler.inverse_transform([testY])
 
 # Calculate root mean squared error
-trainScore = math.sqrt(mean_squared_error(trainY, trainPredict))
-testScore = math.sqrt(mean_squared_error(testY, testPredict))
-
-# Calculate maximum possible error
-max_error = scaler.data_max_[0] - scaler.data_min_[0]
-
-# Calculate accuracy in percentage
-trainMape = mean_absolute_percentage_error(trainY, trainPredict)
-testMape = mean_absolute_percentage_error(testY, testPredict)
+trainScore = math.sqrt(mean_squared_error(trainY[0], trainPredict[:,0]))
+testScore = math.sqrt(mean_squared_error(testY[0], testPredict[:,0]))
 
 # Plot the results
 fig = go.Figure()
@@ -143,6 +119,9 @@ fig.update_layout(
 
 st.plotly_chart(fig)
 
+# Calculate percentage error
+trainMape = mean_absolute_percentage_error(trainY[0], trainPredict[:,0])
+testMape = mean_absolute_percentage_error(testY[0], testPredict[:,0])
 
 # Display scores
 st.write('Train RMSE:', trainScore)
@@ -154,7 +133,7 @@ st.write('Test Percentage Error:', testMape * 100)
 
 
 
-
+import pandas as pd
 
 
 # Define a function to determine if the price is going up or down
