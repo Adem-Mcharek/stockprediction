@@ -131,10 +131,37 @@ st.write('Test Percentage Error:', testMape * 100)
 
 
 
+# Calculate price changes
+trainPriceChanges = np.diff(trainPredict[:,0])
+testPriceChanges = np.diff(testPredict[:,0])
+
+# Define a threshold
+threshold = 0.0 
+
+# Predict price movement
+trainPredictDirection = np.where(trainPriceChanges > threshold, 1, -1)  # 1 for going up, -1 for going down
+testPredictDirection = np.where(testPriceChanges > threshold, 1, -1)
+
+# Plot the results
+fig_train = go.Figure()
+fig_train.add_trace(go.Scatter(x=np.arange(len(trainPredictDirection)), y=trainPredictDirection, mode='lines', name='Predicted Train Price Movement'))
+fig_train.update_layout(title='Train Predictions', xaxis_title='Time', yaxis_title='Direction')
+fig_train.update_xaxes(rangeslider_visible=True)
+
+fig_test = go.Figure()
+fig_test.add_trace(go.Scatter(x=np.arange(len(testPredictDirection)), y=testPredictDirection, mode='lines', name='Predicted Test Price Movement'))
+fig_test.update_layout(title='Test Predictions', xaxis_title='Time', yaxis_title='Direction')
+fig_test.update_xaxes(rangeslider_visible=True)
+
+
+st.subheader('Predicted Price Movements')
+st.write('Train Set:')
+st.plotly_chart(fig_train)
+st.write('Test Set:')
+st.plotly_chart(fig_test)
 
 
 import pandas as pd
-
 
 # Define a function to determine if the price is going up or down
 def predict_price_direction(predictions, actual_prices):
