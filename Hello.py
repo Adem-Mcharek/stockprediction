@@ -160,7 +160,6 @@ st.plotly_chart(fig_train)
 st.write('Test Set:')
 st.plotly_chart(fig_test)
 
-
 import pandas as pd
 
 # Define a function to determine if the price is going up or down
@@ -208,7 +207,6 @@ price_diff_last_week = gold_close[-7:] - gold_close[-14:-7]
 # Predict whether the price is going up or down for each day of the last week
 price_directions_last_week = predict_price_direction(price_diff_last_week, gold_close[-7:])
 
-
 print("Price Directions for Each Day of Last Week:")
 print(price_directions_last_week)
 
@@ -232,7 +230,6 @@ print(next_week_predictions)
 week_direction = max(set(next_week_predictions), key=next_week_predictions.count)
 
 print("Overall Direction of Next Week:", week_direction)
-
 
 
 print("Price Directions for Each Day of Next Week:")
